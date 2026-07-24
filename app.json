@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "JetRunner",
+    "slug": "jetrunner",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,9 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.flyship.jetrunner"
     },
     "android": {
+      "package": "com.flyship.jetrunner",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -24,6 +26,20 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "apiBase": "https://flyship-backend-409206511578.us-central1.run.app",
+      "eas": {
+        "projectId": "c7700cf8-96b3-4897-8754-8621249af202"
+      }
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker",
+      "expo-secure-store"
+    ],
+    "updates": {
+      "enabled": false
+    },
+    "owner": "rmurali79"
   }
 }
