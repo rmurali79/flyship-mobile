@@ -10,14 +10,14 @@ const CreateTravelPlanScreen = ({ navigation }) => {
     const snackbar = useSnackbar();
     const { colors } = useTheme();
     const [cities, setCities] = useState([]);
-    const [form, setForm] = useState({ origin: '', destination: '', start_date: '', end_date: '' });
+    const [form, setForm] = useState({ origin: '', destination: '', start_date: '', end_date: '', available_baggage_kg: '' });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => { axios.get(API_BASE + '/api/cities').then(r => setCities(r.data)).catch(() => {}); }, []);
     const update = (key, val) => setForm({ ...form, [key]: val });
 
     const handleSubmit = async () => {
-        if (!form.origin || !form.destination || !form.start_date || !form.end_date) { snackbar.warn('Fill all fields'); return; }
+        if (!form.origin || !form.destination || !form.start_date || !form.end_date || !form.available_baggage_kg) { snackbar.warn('Fill all fields'); return; }
         setLoading(true);
         try {
             await axios.post(API_BASE + '/api/travel-plans', form);
@@ -42,6 +42,10 @@ const CreateTravelPlanScreen = ({ navigation }) => {
             <DatePicker value={form.start_date} onChange={v => update('start_date', v)} placeholder="Select start date" minimumDate={new Date()} />
             <Label text="End Date" colors={colors} />
             <DatePicker value={form.end_date} onChange={v => update('end_date', v)} placeholder="Select end date" minimumDate={form.start_date ? new Date(form.start_date + 'T00:00:00') : new Date()} />
+
+            <Label text="Available Baggage (kg)" colors={colors} />
+            <TextInput value={form.available_baggage_kg} onChangeText={v => update('available_baggage_kg', v)} keyboardType="decimal-pad" placeholder="e.g. 5.0" placeholderTextColor={colors.textSecondary} style={inputStyle} />
+            <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: -4, marginBottom: 8 }}>Shipments heavier than this won't be shown to you as matches.</Text>
 
             <Pressable onPress={handleSubmit} disabled={loading}
                 style={{ backgroundColor: loading ? '#93c5fd' : '#2563eb', borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginTop: 16 }}>

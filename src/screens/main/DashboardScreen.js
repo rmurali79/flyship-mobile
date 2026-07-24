@@ -110,6 +110,11 @@ const DashboardScreen = ({ navigation }) => {
                                 <Text style={{ color: colors.textSecondary, fontSize: 12, textAlign: 'center' }}>
                                     {formatDate(plan.start_date)} - {formatDate(plan.end_date)}
                                 </Text>
+                                {plan.available_baggage_kg && (
+                                    <Text style={{ color: colors.textSecondary, fontSize: 11, textAlign: 'center', marginTop: 2 }}>
+                                        🧳 {plan.available_baggage_kg} kg available
+                                    </Text>
+                                )}
                                 <Pressable onPress={() => handleCancelPlan(plan.id)}
                                     style={{ marginTop: 8, alignSelf: 'flex-end', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#fca5a5' }}>
                                     <Text style={{ color: '#dc2626', fontSize: 12, fontWeight: '600' }}>Cancel</Text>

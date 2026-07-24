@@ -72,6 +72,9 @@ const ShipmentCard = ({ shipment, cityMap, onPress }) => {
                 <Text style={{ color: colors.text, fontWeight: '500', fontSize: 13, marginBottom: 4 }} numberOfLines={1}>
                     {shipment.item_description || 'No description'}
                 </Text>
+                {shipment.weight && (
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, marginBottom: 4 }}>⚖️ {shipment.weight} kg</Text>
+                )}
 
                 {shipment.reach_latest_by ? (
                     <Text style={{ color: '#ef4444', fontSize: 11, fontWeight: '600', marginBottom: 8 }}>
