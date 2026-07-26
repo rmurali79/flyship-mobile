@@ -99,9 +99,14 @@ build_local() {
   # Make gradlew executable
   chmod +x gradlew
 
-  # Clean build
-  log "Running gradlew clean..."
-  ./gradlew clean
+  # Note: deliberately not running `./gradlew clean` here. On this RN/autolinking
+  # setup, `clean` triggers :app:externalNativeBuildCleanDebug before the
+  # per-module codegen (async-storage, reanimated, etc.) has generated its JNI
+  # sources, and CMake's autolinking file references those not-yet-existing
+  # directories and fails. assembleDebug/assembleRelease regenerate codegen and
+  # rebuild incrementally on their own — no explicit clean needed. If a fully
+  # clean build is ever required, run `rm -rf android` to regenerate via
+  # `expo prebuild` instead (see the log message above).
 
   if [[ "$BUILD_TYPE" == "release" ]]; then
     log "Compiling Release APK..."
