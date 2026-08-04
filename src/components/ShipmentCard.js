@@ -3,6 +3,7 @@ import { View, Text, Image, Pressable } from 'react-native';
 import { formatDate } from '../utils/date';
 import { resolveImageUrl } from '../utils/image';
 import { useTheme } from '../context/ThemeContext';
+import CityThumb from './CityThumb';
 
 const statusColors = {
     pending: { bg: '#fef9c3', text: '#854d0e' },
@@ -15,17 +16,7 @@ const ShipmentCard = ({ shipment, cityMap, onPress }) => {
     const { colors } = useTheme();
     const [imgError, setImgError] = useState(false);
 
-    const getCityImage = (name) => {
-        if (!name || !cityMap) return null;
-        const lower = name.toLowerCase();
-        if (cityMap[lower]) return cityMap[lower];
-        const found = Object.keys(cityMap).find(k => lower.includes(k));
-        return found ? cityMap[found] : null;
-    };
-
     const sc = statusColors[shipment.status] || { bg: '#f3f4f6', text: '#374151' };
-    const originImg = getCityImage(shipment.origin);
-    const destImg = getCityImage(shipment.destination);
     const itemImg = resolveImageUrl(shipment.photo_url);
 
     return (
@@ -47,24 +38,12 @@ const ShipmentCard = ({ shipment, cityMap, onPress }) => {
             <View style={{ padding: 14 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                     <View style={{ alignItems: 'center', flex: 1 }}>
-                        {originImg ? (
-                            <Image source={{ uri: originImg }} style={{ width: 72, height: 48, borderRadius: 8, marginBottom: 4, backgroundColor: '#e5e7eb' }} />
-                        ) : (
-                            <View style={{ width: 72, height: 48, borderRadius: 8, marginBottom: 4, backgroundColor: colors.border, justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={{ fontSize: 10, color: colors.textSecondary }}>📍</Text>
-                            </View>
-                        )}
+                        <CityThumb name={shipment.origin} cityMap={cityMap} width={72} height={48} style={{ marginBottom: 4 }} />
                         <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary, textAlign: 'center' }} numberOfLines={1}>{shipment.origin}</Text>
                     </View>
                     <Text style={{ fontSize: 18, color: '#9ca3af', marginHorizontal: 6 }}>✈️</Text>
                     <View style={{ alignItems: 'center', flex: 1 }}>
-                        {destImg ? (
-                            <Image source={{ uri: destImg }} style={{ width: 72, height: 48, borderRadius: 8, marginBottom: 4, backgroundColor: '#e5e7eb' }} />
-                        ) : (
-                            <View style={{ width: 72, height: 48, borderRadius: 8, marginBottom: 4, backgroundColor: colors.border, justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={{ fontSize: 10, color: colors.textSecondary }}>📍</Text>
-                            </View>
-                        )}
+                        <CityThumb name={shipment.destination} cityMap={cityMap} width={72} height={48} style={{ marginBottom: 4 }} />
                         <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textSecondary, textAlign: 'center' }} numberOfLines={1}>{shipment.destination}</Text>
                     </View>
                 </View>

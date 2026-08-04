@@ -3,11 +3,12 @@ import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, Scrol
 import { useAuth } from '../../context/AuthContext';
 import { useSnackbar } from '../../context/SnackbarContext';
 import { useTheme } from '../../context/ThemeContext';
+import FlyshipMark from '../../components/FlyshipMark';
 
 const LoginScreen = ({ navigation }) => {
     const { login } = useAuth();
     const snackbar = useSnackbar();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -23,7 +24,10 @@ const LoginScreen = ({ navigation }) => {
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, backgroundColor: colors.bg }}>
-                <Text style={{ fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: colors.text }}>JetRunner</Text>
+                <View style={{ alignItems: 'center', marginBottom: 8 }}>
+                    <FlyshipMark size={56} dark={isDark} />
+                </View>
+                <Text style={{ fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: colors.text }}>Flyship</Text>
                 <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginBottom: 32 }}>Sign in to your account</Text>
 
                 <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: colors.border }}>

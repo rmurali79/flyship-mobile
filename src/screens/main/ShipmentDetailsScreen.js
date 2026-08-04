@@ -17,7 +17,9 @@ const ShipmentDetailsScreen = ({ route, navigation }) => {
     const { colors } = useTheme();
     const [shipment, setShipment] = useState(null);
     const [quotes, setQuotes] = useState([]);
+    const [reviews, setReviews] = useState([]);
     const [newQuote, setNewQuote] = useState({ amount: '', delivery_date: '', currency: 'USD', message: '' });
+    const [newReview, setNewReview] = useState({ rating: 0, comment: '' });
     const [deleteReason, setDeleteReason] = useState('');
     const [showDeleteForm, setShowDeleteForm] = useState(false);
     const [withdrawReason, setWithdrawReason] = useState('');
@@ -27,10 +29,14 @@ const ShipmentDetailsScreen = ({ route, navigation }) => {
 
     const refreshData = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/api/shipments/${id}`);
+            const [res, qRes, rRes] = await Promise.all([
+                axios.get(`${API_BASE}/api/shipments/${id}`),
+                axios.get(`${API_BASE}/api/quotes/shipment/${id}`),
+                axios.get(`${API_BASE}/api/reviews/shipment/${id}`),
+            ]);
             setShipment(res.data);
-            const qRes = await axios.get(`${API_BASE}/api/quotes/shipment/${id}`);
             setQuotes(qRes.data);
+            setReviews(rRes.data);
         } catch (e) { console.error(e); }
     };
 
@@ -52,6 +58,24 @@ const ShipmentDetailsScreen = ({ route, navigation }) => {
             await axios.post(`${API_BASE}/api/quotes/${quoteId}/accept`);
             await refreshData();
             snackbar.success('Quote accepted');
+        } catch (e) { snackbar.error(e.response?.data?.error || 'Failed'); }
+    };
+
+    const handleUpdateStatus = async (newStatus) => {
+        try {
+            await axios.post(`${API_BASE}/api/shipments/${id}/status`, { status: newStatus });
+            await refreshData();
+            snackbar.success(newStatus === 'in_transit' ? 'Marked as picked up' : 'Marked as delivered');
+        } catch (e) { snackbar.error(e.response?.data?.error || 'Failed'); }
+    };
+
+    const handleReviewSubmit = async () => {
+        if (!newReview.rating) { snackbar.warn('Please select a rating'); return; }
+        try {
+            await axios.post(`${API_BASE}/api/reviews`, { shipment_id: id, rating: newReview.rating, comment: newReview.comment });
+            await refreshData();
+            setNewReview({ rating: 0, comment: '' });
+            snackbar.success('Review submitted');
         } catch (e) { snackbar.error(e.response?.data?.error || 'Failed'); }
     };
 
@@ -94,6 +118,14 @@ const ShipmentDetailsScreen = ({ route, navigation }) => {
     const canDelete = isOwner && shipment.status !== 'delivered' && shipment.status !== 'deleted';
     const inputStyle = { borderWidth: 1, borderColor: colors.inputBorder, borderRadius: 8, padding: 10, marginBottom: 8, backgroundColor: colors.inputBg, color: colors.text };
 
+    const acceptedQuote = quotes.find(q => q.status === 'accepted');
+    const isAcceptedTraveler = user.id === acceptedQuote?.traveler_id;
+    const isReviewParticipant = shipment.status === 'delivered' && acceptedQuote &&
+        (user.id === shipment.shipperId || user.id === acceptedQuote.traveler_id);
+    const myReview = reviews.find(r => r.reviewer_id === user.id);
+    const otherReview = reviews.find(r => r.reviewer_id !== user.id);
+    const otherPartyLabel = user.id === shipment.shipperId ? 'the traveler' : 'the shipper';
+
     return (
         <View style={{ flex: 1, backgroundColor: colors.bg }}>
             <ConfirmDialog {...confirmDialog} onCancel={() => setConfirmDialog({ open: false })} />
@@ -117,6 +149,19 @@ const ShipmentDetailsScreen = ({ route, navigation }) => {
                         {shipment.max_budget && <Detail label="Budget" value={`$${shipment.max_budget}`} colors={colors} />}
                         {shipment.reach_latest_by && <Detail label="Reach By" value={formatDate(shipment.reach_latest_by)} colors={colors} />}
                     </View>
+
+                    {isAcceptedTraveler && (shipment.status === 'accepted' || shipment.status === 'in_transit') && (
+                        <Pressable
+                            onPress={() => handleUpdateStatus(shipment.status === 'accepted' ? 'in_transit' : 'delivered')}
+                            style={{
+                                marginTop: 16, borderRadius: 10, paddingVertical: 12, alignItems: 'center',
+                                backgroundColor: shipment.status === 'accepted' ? '#2563eb' : '#16a34a',
+                            }}>
+                            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>
+                                {shipment.status === 'accepted' ? 'Mark as Picked Up' : 'Mark as Delivered'}
+                            </Text>
+                        </Pressable>
+                    )}
 
                     {(shipment.status === 'accepted' || shipment.status === 'in_transit' || shipment.status === 'delivered') && (
                         <View style={{ flexDirection: 'row', gap: 10, marginTop: 16, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 16 }}>
@@ -175,7 +220,13 @@ const ShipmentDetailsScreen = ({ route, navigation }) => {
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <View style={{ flex: 1 }}>
                                     <Text style={{ fontWeight: 'bold', fontSize: 16, color: colors.text }}>${q.amount}</Text>
-                                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>by {q.Traveler?.name} · {formatDate(q.delivery_date)}</Text>
+                                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                                        by {q.Traveler?.name}
+                                        {q.Traveler?.review_count > 0 && (
+                                            <Text style={{ color: '#ca8a04', fontWeight: 'bold' }}> · ★ {q.Traveler.average_rating.toFixed(1)} ({q.Traveler.review_count})</Text>
+                                        )}
+                                        {' · '}{formatDate(q.delivery_date)}
+                                    </Text>
                                     {q.message && <Text style={{ color: colors.textSecondary, fontSize: 12, fontStyle: 'italic', marginTop: 2 }}>"{q.message}"</Text>}
                                     {q.status === 'withdrawn' && q.withdrawal_reason && <Text style={{ color: '#ea580c', fontSize: 12, marginTop: 2 }}>Withdrawn: {q.withdrawal_reason}</Text>}
                                 </View>
@@ -250,6 +301,42 @@ const ShipmentDetailsScreen = ({ route, navigation }) => {
                     {quotes.length === 0 && <Text style={{ color: colors.textSecondary, fontStyle: 'italic' }}>No quotes yet.</Text>}
                 </View>
 
+                {isReviewParticipant && (
+                    <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, color: colors.text }}>Delivery Review</Text>
+
+                        {myReview ? (
+                            <View style={{ marginBottom: otherReview ? 16 : 0 }}>
+                                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 }}>Your review</Text>
+                                <StarRow rating={myReview.rating} />
+                                {myReview.comment && <Text style={{ color: colors.text, fontStyle: 'italic', marginTop: 6 }}>"{myReview.comment}"</Text>}
+                            </View>
+                        ) : (
+                            <View style={{ backgroundColor: colors.bg, borderRadius: 8, padding: 12, marginBottom: otherReview ? 16 : 0 }}>
+                                <Text style={{ fontWeight: 'bold', marginBottom: 10, color: colors.text }}>Rate {otherPartyLabel}</Text>
+                                <View style={{ marginBottom: 10 }}>
+                                    <StarRow rating={newReview.rating} onRate={(n) => setNewReview({ ...newReview, rating: n })} size={28} />
+                                </View>
+                                <TextInput value={newReview.comment} onChangeText={v => setNewReview({ ...newReview, comment: v })}
+                                    placeholder="Leave a comment (optional)" placeholderTextColor={colors.textSecondary} multiline style={{ ...inputStyle, minHeight: 60 }} />
+                                <Pressable onPress={handleReviewSubmit} style={{ backgroundColor: '#2563eb', borderRadius: 8, paddingVertical: 12, alignItems: 'center' }}>
+                                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Submit Review</Text>
+                                </Pressable>
+                            </View>
+                        )}
+
+                        {otherReview && (
+                            <View>
+                                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 }}>
+                                    {user.id === shipment.shipperId ? "Traveler's" : "Shipper's"} review of this delivery
+                                </Text>
+                                <StarRow rating={otherReview.rating} />
+                                {otherReview.comment && <Text style={{ color: colors.text, fontStyle: 'italic', marginTop: 6 }}>"{otherReview.comment}"</Text>}
+                            </View>
+                        )}
+                    </View>
+                )}
+
                 <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 24 }}>
                     <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, color: colors.text }}>Tracking History</Text>
                     {shipment.History?.length > 0 ? shipment.History.map((h, i) => (
@@ -275,6 +362,20 @@ const Detail = ({ label, value, colors }) => (
     <View style={{ marginBottom: 8 }}>
         <Text style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '600', textTransform: 'uppercase' }}>{label}</Text>
         <Text style={{ fontWeight: 'bold', color: colors.text }}>{value}</Text>
+    </View>
+);
+
+const StarRow = ({ rating, onRate, size = 22 }) => (
+    <View style={{ flexDirection: 'row', gap: 4 }}>
+        {[1, 2, 3, 4, 5].map(n => {
+            const filled = n <= rating;
+            const star = <Text style={{ fontSize: size, color: filled ? '#ca8a04' : '#d1d5db' }}>{filled ? '★' : '☆'}</Text>;
+            return onRate ? (
+                <Pressable key={n} onPress={() => onRate(n)}>{star}</Pressable>
+            ) : (
+                <View key={n}>{star}</View>
+            );
+        })}
     </View>
 );
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl, Image } from 'react-native';
+import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
 import axios from 'axios';
 import API_BASE from '../../config/api';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ import { formatDate } from '../../utils/date';
 import StatsWidget from '../../components/StatsWidget';
 import ShipmentCard from '../../components/ShipmentCard';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import CityThumb from '../../components/CityThumb';
 
 const DashboardScreen = ({ navigation }) => {
     const { user } = useAuth();
@@ -30,7 +31,7 @@ const DashboardScreen = ({ navigation }) => {
         try {
             const citiesRes = await axios.get(API_BASE + '/api/cities');
             const map = {};
-            citiesRes.data.forEach(c => { if (c.image_url) map[c.name.toLowerCase()] = c.image_url; });
+            citiesRes.data.forEach(c => { map[c.name.toLowerCase()] = { imageUrl: c.image_url || null, code: c.code }; });
             setCityMap(map);
 
             let endpoint = '/api/shipments';
@@ -72,11 +73,6 @@ const DashboardScreen = ({ navigation }) => {
         });
     };
 
-    const getCityImage = (name) => {
-        if (!name || !cityMap) return null;
-        return cityMap[name.toLowerCase()] || null;
-    };
-
     return (
         <View style={{ flex: 1, backgroundColor: colors.bg }}>
             <ConfirmDialog {...confirmDialog} onCancel={() => setConfirmDialog({ open: false })} />
@@ -98,12 +94,12 @@ const DashboardScreen = ({ navigation }) => {
                             <View key={plan.id} style={{ backgroundColor: colors.card, borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                                     <View style={{ alignItems: 'center' }}>
-                                        {getCityImage(plan.origin) && <Image source={{ uri: getCityImage(plan.origin) }} style={{ width: 60, height: 40, borderRadius: 6, marginBottom: 2 }} />}
+                                        <CityThumb name={plan.origin} cityMap={cityMap} width={60} height={40} style={{ marginBottom: 2 }} />
                                         <Text style={{ fontSize: 11, fontWeight: '600', color: colors.text }}>{plan.origin}</Text>
                                     </View>
                                     <Text style={{ fontSize: 18, color: '#9ca3af' }}>✈️</Text>
                                     <View style={{ alignItems: 'center' }}>
-                                        {getCityImage(plan.destination) && <Image source={{ uri: getCityImage(plan.destination) }} style={{ width: 60, height: 40, borderRadius: 6, marginBottom: 2 }} />}
+                                        <CityThumb name={plan.destination} cityMap={cityMap} width={60} height={40} style={{ marginBottom: 2 }} />
                                         <Text style={{ fontSize: 11, fontWeight: '600', color: colors.text }}>{plan.destination}</Text>
                                     </View>
                                 </View>
