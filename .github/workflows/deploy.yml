@@ -1,0 +1,53 @@
+name: Deploy
+
+# The real end-to-end build + deploy. Only runs on main, which only ever
+# moves forward via a human-reviewed, approved pull request (branch
+# protection) — that PR review is the validation gate for this deploy.
+#
+# Uses the "local" Gradle build path (scripts/build_android.sh local), not
+# eas-cloud: the existing eas-cloud path doesn't download the resulting
+# artifact locally, so upload_apk_gcs.sh would have nothing to find. Building
+# locally in the runner is also self-contained (no Expo account/token needed).
+# Builds a debug APK — the release path needs a signing config this repo
+# doesn't have set up yet.
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Android APK
+        run: ./scripts/build_android.sh local debug
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Upload APK to GCS
+        run: ./scripts/upload_apk_gcs.sh
