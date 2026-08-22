@@ -27,7 +27,7 @@ const LoginScreen = ({ navigation }) => {
                 <View style={{ alignItems: 'center', marginBottom: 8 }}>
                     <FlyshipMark size={56} dark={isDark} />
                 </View>
-                <Text style={{ fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: colors.text }}>Flyship</Text>
+                <Text style={{ fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: colors.text }}>FLYSHIP</Text>
                 <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginBottom: 32 }}>Sign in to your account</Text>
 
                 <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: colors.border }}>
