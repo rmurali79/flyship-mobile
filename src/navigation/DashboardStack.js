@@ -22,7 +22,7 @@ const DashboardStack = () => {
                     headerTitle: () => (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             <FlyshipMark size={22} dark={isDark} />
-                            <Text style={{ fontSize: 17, fontWeight: 'bold', color: colors.text }}>Flyship</Text>
+                            <Text style={{ fontSize: 17, fontWeight: 'bold', color: colors.text }}>FLYSHIP</Text>
                         </View>
                     ),
                 }}
