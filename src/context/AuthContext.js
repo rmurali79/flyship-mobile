@@ -59,8 +59,14 @@ export const AuthProvider = ({ children }) => {
         setUserState(null);
     };
 
+    const updateUser = async (fields) => {
+        const updated = { ...user, ...fields };
+        await setUser(updated);
+        setUserState(updated);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, updateUser, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );

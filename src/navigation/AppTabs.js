@@ -23,8 +23,14 @@ const TabIcon = ({ label, focused }) => (
     </View>
 );
 
+const ROLES = [
+    { value: 'traveler', label: 'Traveler' },
+    { value: 'shipper', label: 'Shipper' },
+    { value: 'both', label: 'Both' },
+];
+
 const ProfileScreen = () => {
-    const { user, logout, login } = useAuth();
+    const { user, logout, login, updateUser } = useAuth();
     const snackbar = useSnackbar();
     const { isDark, toggle, colors } = useTheme();
     const insets = useSafeAreaInsets();
@@ -33,6 +39,7 @@ const ProfileScreen = () => {
     const [phone, setPhone] = useState('');
     const [countryCode, setCountryCode] = useState('');
     const [profilePic, setProfilePic] = useState(user?.profile_picture || null);
+    const [role, setRole] = useState(user?.role || 'traveler');
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -41,6 +48,7 @@ const ProfileScreen = () => {
             setPhone(res.data.mobile_number || '');
             setCountryCode(res.data.country_code || '');
             setProfilePic(res.data.profile_picture || null);
+            setRole(res.data.role || 'traveler');
         }).catch(() => {});
     }, []);
 
@@ -68,7 +76,9 @@ const ProfileScreen = () => {
                 profile_picture: profilePic,
                 country_code: countryCode,
                 mobile_number: phone,
+                role,
             });
+            await updateUser({ name: res.data.name, role: res.data.role, profile_picture: res.data.profile_picture });
             snackbar.success('Profile updated');
             setEditing(false);
         } catch (e) { snackbar.error(e.response?.data?.error || 'Failed'); }
@@ -110,6 +120,19 @@ const ProfileScreen = () => {
                         <TextInput value={phone} onChangeText={setPhone} placeholder="9876543210"
                             placeholderTextColor={colors.textSecondary} keyboardType="phone-pad"
                             style={{ borderWidth: 1, borderColor: colors.inputBorder, borderRadius: 8, padding: 12, marginBottom: 16, backgroundColor: colors.inputBg, color: colors.text, fontSize: 16, textAlign: 'center' }} />
+                        <Text style={{ fontWeight: '600', color: colors.text, marginBottom: 4 }}>Role</Text>
+                        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                            {ROLES.map((r) => (
+                                <Pressable key={r.value} onPress={() => setRole(r.value)}
+                                    style={{
+                                        flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center',
+                                        borderWidth: 1, borderColor: role === r.value ? '#2563eb' : colors.border,
+                                        backgroundColor: role === r.value ? '#2563eb' : colors.inputBg,
+                                    }}>
+                                    <Text style={{ color: role === r.value ? '#fff' : colors.text, fontWeight: '600', fontSize: 13 }}>{r.label}</Text>
+                                </Pressable>
+                            ))}
+                        </View>
                         <View style={{ flexDirection: 'row', gap: 10 }}>
                             <Pressable onPress={handleSave} disabled={saving}
                                 style={{ flex: 1, backgroundColor: saving ? '#93c5fd' : '#2563eb', borderRadius: 8, paddingVertical: 12, alignItems: 'center' }}>
@@ -132,7 +155,7 @@ const ProfileScreen = () => {
                         <Text style={{ color: colors.textSecondary, marginTop: 2 }}>{user?.email}</Text>
                         {phone ? <Text style={{ color: colors.textSecondary, marginTop: 2 }}>{countryCode} {phone}</Text> : null}
                         <View style={{ backgroundColor: '#dbeafe', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginTop: 8 }}>
-                            <Text style={{ color: '#1e40af', fontWeight: '600', textTransform: 'capitalize', fontSize: 13 }}>{user?.role}</Text>
+                            <Text style={{ color: '#1e40af', fontWeight: '600', textTransform: 'capitalize', fontSize: 13 }}>{role}</Text>
                         </View>
                     </View>
                 )}
